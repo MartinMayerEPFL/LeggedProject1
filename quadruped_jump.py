@@ -64,11 +64,16 @@ def quadruped_jump():
     simulator.close()
 
     # OPTIONAL: add additional functions here (e.g., plotting)
+    
 
 
 def nominal_position(
     simulator: QuadSimulator,
-    # OPTIONAL: add potential controller parameters here (e.g., gains)
+    # OPTIONAL: add potential controller parameters here (e.g., gains)  
+    kpJoint = np.diag([20, 20, 20]), 
+    kdJoint = np.diag([20 ,20,20]), 
+    pos_des = np.array([0, 0.8, -1.5]) #POSITION Désirée
+    
 ) -> np.ndarray:
     # All motor torques are in a single array
     tau = np.zeros(N_JOINTS * N_LEGS)
@@ -76,6 +81,25 @@ def nominal_position(
 
         # TODO: compute nominal position torques for leg_id
         tau_i = np.zeros(3)
+        foot_position = np.zeros(3)
+
+        # Get Jacobian for the leg
+        J, foot_position = simulator.get_jacobian_and_position(leg_id)
+        ###Controller PD (Martin)
+
+
+
+        #METTRE OU ? DANS LA BOUCLE FOR ? AVANT ?
+        motor_vel = np.zeros(3)
+        motor_vel = simulator.get_motor_velocities(leg_id)
+        print("motor_vel shape:", motor_vel.shape)
+        #motor_pos = simulator.get_motor_angles(leg_id)
+
+        foot_vel = J @ motor_vel 
+
+        #Récupérer l'angle des moteurs et leur vitesse et les mets dans notre controlleur PD pour retour a position définie
+        tau_i += J.transpose() @ (kpJoint*(pos_des - foot_position) + kdJoint*(-foot_vel))
+        ###MARTIN FIN
 
         # Store in torques array
         tau[leg_id * N_JOINTS : leg_id * N_JOINTS + N_JOINTS] = tau_i
@@ -92,7 +116,6 @@ def virtual_model(
 
         # TODO: compute virtual model torques for leg_id
         tau_i = np.zeros(3)
-
         # Store in torques array
         tau[leg_id * N_JOINTS : leg_id * N_JOINTS + N_JOINTS] = tau_i
 
