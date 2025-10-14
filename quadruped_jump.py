@@ -67,7 +67,11 @@ def quadruped_jump():
 
 
 def nominal_position(
-    simulator: QuadSimulator,
+    simulator: QuadSimulator, 
+    Kpjoin=np.diag([20,20,20]), 
+    Kdjoin=np.diag([1,1,1]), 
+    des_pos=np.array([0,0,-0.25]),
+    des_vel=np.array([0,0,0])
     # OPTIONAL: add potential controller parameters here (e.g., gains)
 ) -> np.ndarray:
     # All motor torques are in a single array
@@ -76,6 +80,19 @@ def nominal_position(
 
         # TODO: compute nominal position torques for leg_id
         tau_i = np.zeros(3)
+        J, foot_pos = simulator.get_jacobian_and_position(leg_id)
+        J_T = J.transpose()
+
+        foot_vel = J @ simulator.get_motor_velocities(leg_id)
+
+        # hip offset
+        hip_offset = 0.25
+        if leg_id%2 == 0:  # right legs
+            des_pos[1] -= hip_offset
+        else:  # left legs
+            des_pos[1] += hip_offset
+
+        tau_i = J_T @ (Kpjoin @ (des_pos - foot_pos) + Kdjoin @ (des_vel - foot_vel))
 
         # Store in torques array
         tau[leg_id * N_JOINTS : leg_id * N_JOINTS + N_JOINTS] = tau_i
