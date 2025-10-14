@@ -92,10 +92,30 @@ def virtual_model(
 
         # TODO: compute virtual model torques for leg_id
         tau_i = np.zeros(3)
+        first_matrix = [
+            [1, 1, -1, -1],
+            [-1, 1, -1, 1],
+            [0, 0, 0, 0]
+        ]
+        P = simulator.get_base_orientation_matrix() @ first_matrix
+        
+        # Gain que l'on peut changer 
+        K_vmc = 1
 
+        matrix_K = K_vmc*([0, 0, 1] @ P)
+        zeros_part = np.zeros((2, 4))
+        F_vmc = np.vstack([zeros_part, matrix_K])
+        #
+        #           | 0  0  0  0 |
+        # F_vmc =   | 0  0  0  0 | 
+        #           | ka kb kc kd|
+        #
+
+        # tau_i = J_i(q_i) * F_vmc_i
+        jacobian_inverse = np.linalg.inv(simulator.get_jacobian_and_position(leg_id)[0]) # Jacobienne inverse
+        tau_i = jacobian_inverse @ F_vmc[: , leg_id]
         # Store in torques array
         tau[leg_id * N_JOINTS : leg_id * N_JOINTS + N_JOINTS] = tau_i
-
     return tau
 
 
