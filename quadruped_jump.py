@@ -68,9 +68,9 @@ def quadruped_jump():
 
 def nominal_position(
     simulator: QuadSimulator, 
-    Kpjoin=np.diag([50,100,100]), 
-    Kdjoin=np.diag([2,2,2]), 
-    des_pos=np.array([0,0,-0.20]),
+    Kpjoin=np.diag([200,200,200]), 
+    Kdjoin=np.diag([25,25,25]), 
+    des_pos=np.array([0,0,-0.25]),
     des_vel=np.array([0,0,0])
     # OPTIONAL: add potential controller parameters here (e.g., gains)
 ) -> np.ndarray:
@@ -87,10 +87,10 @@ def nominal_position(
 
         # hip offset
         hip_offset = 0.35
-        if leg_id%2 == 0:  # right legs
-            des_pos[0] -= hip_offset
-        else:  # left legs
-            des_pos[0] += hip_offset
+        #if leg_id%2 == 0:  # right legs
+            #des_pos[1] -= hip_offset
+        #else:  # left legs
+            #des_pos[1] += hip_offset
 
         tau_i = J_T @ (Kpjoin @ (des_pos - foot_pos) + Kdjoin @ (des_vel - foot_vel))
 
@@ -108,6 +108,7 @@ def virtual_model(
     for leg_id in range(N_LEGS):
 
         # TODO: compute virtual model torques for leg_id
+
         tau_i = np.zeros(3)
 
         first_matrix = [
@@ -118,7 +119,7 @@ def virtual_model(
         P = simulator.get_base_orientation_matrix() @ first_matrix
         
         # Gain que l'on peut changer 
-        K_vmc = 1
+        K_vmc = 10
 
         matrix_K = K_vmc*([0, 0, 1] @ P)
         zeros_part = np.zeros((2, 4))
@@ -131,7 +132,7 @@ def virtual_model(
 
         # tau_i = J_i(q_i) * F_vmc_i
         jacobian_inverse = np.linalg.inv(simulator.get_jacobian_and_position(leg_id)[0]) # Jacobienne inverse
-        tau_i = jacobian_inverse @ F_vmc[: , leg_id]
+        tau_i += jacobian_inverse @ F_vmc[: , leg_id]
         # Store in torques array
         tau[leg_id * N_JOINTS : leg_id * N_JOINTS + N_JOINTS] = tau_i
     return tau
