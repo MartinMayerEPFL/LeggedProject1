@@ -112,7 +112,6 @@ def virtual_model(
         tau_i = np.zeros(3)
         # Store in torques array
         tau[leg_id * N_JOINTS : leg_id * N_JOINTS + N_JOINTS] = tau_i
-
     return tau
 
 
