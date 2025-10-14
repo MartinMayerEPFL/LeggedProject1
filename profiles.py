@@ -10,7 +10,7 @@ class FootForceProfile:
 
         Args:
             f0 (float): Frequency of the impulse (Hz)
-            f1 (float): Frequency between impulses (Hz)
+            f1 (float): Frequency between impulses (Hz)             <- PAS SUR DE L'UTILITE
             Fx (float): Foot force amplitude in X direction (N)
             Fy (float): Foot force amplitude in Y direction (N)
             Fz (float): Foot force amplitude in Z direction (N)
@@ -28,10 +28,22 @@ class FootForceProfile:
             dt (float): Timestep duration (s)
         """
         # TODO: integrate the oscillator equation
+        #Calculer le temps d'un step (dt):
+
+        if 0 <= self.theta < np.pi: #impulse phase
+            self.theta += 2 * np.pi * self.f1 * dt # dtheta/dt = theta' = 2pi*f1 
+        else:
+            self.theta += 2 * np.pi * self.f0 * dt #dtheta/dt = theta' = 2pi*f0
+        
+        return 0
+
+
 
     def phase(self) -> float:
         """Get oscillator phase in [0, 2pi] range."""
         # TODO: return the phase of the oscillator in [0, 2pi] range
+        self.theta = self.theta % (2 * np.pi) # theta modulo 2pi -> phase dans [0, 2pi]
+        #
         return 0
 
     def force(self) -> np.ndarray:
@@ -42,14 +54,25 @@ class FootForceProfile:
             np.ndarray: An R^3 array [Fx, Fy, Fz]
         """
         # TODO: return the force vector given the oscillator state
-        return np.zeros(3)
+        force = np.zeros(3)
+        force[0] = self.F[0] * np.sin(self.theta)
+        #OSCILLATEUR SIMPLE EN Y -> Pas forcement utile bizarre d'avoir un profil en Y 
+        #force[0] = self.F[1] * np.sin(self.theta)
+        force[1] = 0
+        #OSCILLATEUR SIMPLE EN Z
+        force[2] = self.F[2] * np.sin(self.theta)
+        force[2] = np.clip(force[2], None, 0)  # No pulling on the ground
 
-    def impulse_duration(self) -> float:
+        return force
+
+    def impulse_duration(self) -> float: #impulse = phase where force is applied
         """Return impulse duration in seconds."""
         # TODO: compute the impulse duration in seconds
-        return 0
-
-    def idle_duration(self) -> float:
+        impulse_duration = 1 / self.f0 if self.f0 != 0 else 0
+        return impulse_duration
+    
+    def idle_duration(self) -> float: #idle = phase where no force is applied
         """Return idle time between impulses in seconds"""
         # TODO: compute the idle duration in seconds
+        idle_duration = 1/ self.f1 if self.f1 != 0 else 0
         return 0

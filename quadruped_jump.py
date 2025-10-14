@@ -21,10 +21,13 @@ def quadruped_jump():
     # Determine number of jumps to simulate
     n_jumps = 10  # Feel free to change this number
     jump_duration = 5.0  # TODO: determine how long a jump takes
+        ###Comment  determiner la durée d'un saut ?
+    # Compute number of simulation steps
     n_steps = int(n_jumps * jump_duration / sim_options.timestep)
-
     # TODO: set parameters for the foot force profile here
     force_profile = FootForceProfile(f0=0, f1=0, Fx=0, Fy=0, Fz=0)
+        ### Comment choisir ?
+
 
     for _ in range(n_steps):
         # If the simulator is closed, stop the loop
