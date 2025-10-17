@@ -29,9 +29,9 @@ class FootForceProfile:
                 Fz=140
             case 'lateral':
                 f0=1
-                f1=10
+                f1=7
                 Fx=0
-                Fy=10
+                Fy=30
                 Fz=100
             case 'spin':
                 f0=1.25
@@ -93,8 +93,8 @@ class FootForceProfile:
             case 'lateral':
                 force[0] = 0
                 #OSCILLATEUR SIMPLE EN Y
-                force[1] = self.F[1] * np.sin(self.theta + np.pi/4)
-                force[1] = np.clip(force[1], None, 0)  # Upper bound to 0 -> no pulling on the ground
+                force[1] = self.F[1] * np.sin(self.theta + np.pi/6)
+                #force[1] = np.clip(force[1], None, 0)  # Upper bound to 0 -> no pulling on the ground
                 #OSCILLATEUR SIMPLE EN Z
                 force[2] = self.F[2] * np.sin(self.theta)
                 force[2] = np.clip(force[2], None, 0)  # Upper bound to 0 -> no pulling on the ground

@@ -14,7 +14,7 @@ def quadruped_jump():
         on_rack=False,  # Whether to suspend the robot in the air (helpful for debugging)
         render=True,  # Whether to use the GUI visualizer (slower than running in the background)
         record_video=False,  # Whether to record a video to file (needs render=True)
-        tracking_camera=True,  # Whether the camera follows the robot (instead of free)
+        tracking_camera=False,  # Whether the camera follows the robot (instead of free)
     )
     simulator = QuadSimulator(sim_options)
 
@@ -86,11 +86,12 @@ def nominal_position(
         foot_vel = J @ simulator.get_motor_velocities(leg_id)
 
         # hip offset
-        hip_offset = 0.35
-        #if leg_id%2 == 0:  # right legs
-            #des_pos[1] -= hip_offset
+        hip_offset = 0.5
+        
+        #if leg_id == 0 or leg_id == 2 :  # right legs
+        #    des_pos[1] = des_pos[1] - hip_offset
         #else:  # left legs
-            #des_pos[1] += hip_offset
+        #    des_pos[1] = des_pos[1] + hip_offset
 
         tau_i = J_T @ (Kpjoin @ (des_pos - foot_pos) + Kdjoin @ (des_vel - foot_vel))
 
