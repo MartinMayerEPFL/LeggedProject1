@@ -25,7 +25,7 @@ def quadruped_jump():
     # Compute number of simulation steps
     n_steps = int(n_jumps * jump_duration / sim_options.timestep)
     # TODO: set parameters for the foot force profile here
-    force_profile = FootForceProfile(f0=0, f1=0, Fx=0, Fy=0, Fz=0)
+    force_profile = FootForceProfile(f0=1, f1=7, Fx=20, Fy=0, Fz=100)
         ### Comment choisir ?
 
 
@@ -174,6 +174,10 @@ def apply_force_profile(
         # TODO: compute force profile torques for leg_id
         tau_i = np.zeros(3)
 
+        J, _ = simulator.get_jacobian_and_position(leg_id)
+        J_T = J.transpose()
+
+        tau_i = J_T @ force_profile.force()
         # Store in torques array
         tau[leg_id * N_JOINTS : leg_id * N_JOINTS + N_JOINTS] = tau_i
 

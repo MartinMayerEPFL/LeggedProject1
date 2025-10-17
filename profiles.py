@@ -56,12 +56,13 @@ class FootForceProfile:
         # TODO: return the force vector given the oscillator state
         force = np.zeros(3)
         force[0] = self.F[0] * np.sin(self.theta)
+        force[0] = np.clip(force[0], None, 0)  # Upper bound to 0 -> no pulling on the ground
         #OSCILLATEUR SIMPLE EN Y -> Pas forcement utile bizarre d'avoir un profil en Y 
         #force[0] = self.F[1] * np.sin(self.theta)
         force[1] = 0
         #OSCILLATEUR SIMPLE EN Z
         force[2] = self.F[2] * np.sin(self.theta)
-        force[2] = np.clip(force[2], None, 0)  # No pulling on the ground
+        force[2] = np.clip(force[2], None, 0)  # Upper bound to 0 -> no pulling on the ground
 
         return force
 
@@ -75,4 +76,4 @@ class FootForceProfile:
         """Return idle time between impulses in seconds"""
         # TODO: compute the idle duration in seconds
         idle_duration = 1/ self.f1 if self.f1 != 0 else 0
-        return 0
+        return idle_duration
