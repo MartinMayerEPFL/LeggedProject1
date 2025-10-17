@@ -1,14 +1,16 @@
+from unittest import case
 import numpy as np
 
 
 class FootForceProfile:
     """Class to generate foot force profiles over time using a single CPG oscillator"""
 
-    def __init__(self, f0: float, f1: float, Fx: float, Fy: float, Fz: float, mode : str):
+    def __init__(self, mode: str):
         """
         Create instance of foot force profile with its arguments.
 
         Args:
+            mode (str): Mode of the force profile ('foward', 'lateral', 'spin')
             f0 (float): Frequency of the impulse (Hz)
             f1 (float): Frequency between impulses (Hz)             <- PAS SUR DE L'UTILITE
             Fx (float): Foot force amplitude in X direction (N)
@@ -16,6 +18,28 @@ class FootForceProfile:
             Fz (float): Foot force amplitude in Z direction (N)
         """
         self.theta = 0
+        self.mode = mode
+        #TUNING PARAMETERS
+        match mode:
+            case 'forward':
+                f0=1.25 
+                f1=20
+                Fx=60
+                Fy=0
+                Fz=140
+            case 'lateral':
+                f0=1
+                f1=10
+                Fx=0
+                Fy=10
+                Fz=100
+            case 'spin':
+                f0=1.25
+                f1=20
+                Fx=40
+                Fy=40
+                Fz=140
+        ###
         self.f0 = f0
         self.f1 = f1
         self.F = np.array([Fx, Fy, Fz])
@@ -55,11 +79,10 @@ class FootForceProfile:
             np.ndarray: An R^3 array [Fx, Fy, Fz]
         """
         # TODO: return the force vector given the oscillator state
-       
-        match self.mode :
-            case 'forward' :
-                force = np.zeros(3)
-                force[0] = self.F[0] * np.sin(self.theta + np.pi/4)
+        force = np.zeros(3)
+        match self.mode:
+            case 'forward':
+                force[0] = self.F[0] * np.sin(self.theta+ np.pi/4)  #OSCILLATEUR SIMPLE EN X
                 force[0] = np.clip(force[0], None, 0)  # Upper bound to 0 -> no pulling on the ground
                 #OSCILLATEUR SIMPLE EN Y -> Pas forcement utile bizarre d'avoir un profil en Y 
                 #force[0] = self.F[1] * np.sin(self.theta)
@@ -67,28 +90,22 @@ class FootForceProfile:
                 #OSCILLATEUR SIMPLE EN Z
                 force[2] = self.F[2] * np.sin(self.theta)
                 force[2] = np.clip(force[2], None, 0)  # Upper bound to 0 -> no pulling on the ground
-            case 'lateral' :
-                force = np.zeros(3)
+            case 'lateral':
                 force[0] = 0
-                #force[0] = self.F[1] * np.sin(self.theta)
-                force[1] = 0
-                force[1] = self.F[0] * np.sin(self.theta)
-                force[1] = np.clip(force[1], None, 0)
+                #OSCILLATEUR SIMPLE EN Y
+                force[1] = self.F[1] * np.sin(self.theta + np.pi/4)
+                force[1] = np.clip(force[1], None, 0)  # Upper bound to 0 -> no pulling on the ground
                 #OSCILLATEUR SIMPLE EN Z
                 force[2] = self.F[2] * np.sin(self.theta)
                 force[2] = np.clip(force[2], None, 0)  # Upper bound to 0 -> no pulling on the ground
-            
-            case 'spin' :
-                force = np.zeros(3)
+           
+            case 'spin':
                 force[0] = self.F[0] * np.sin(self.theta + np.pi/4)
                 force[0] = np.clip(force[0], None, 0)  # Upper bound to 0 -> no pulling on the ground
-                #OSCILLATEUR SIMPLE EN Y -> Pas forcement utile bizarre d'avoir un profil en Y 
-                #force[0] = self.F[1] * np.sin(self.theta)
-                force[1] = 0
-                #OSCILLATEUR SIMPLE EN Z
+                force[1] = self.F[1] * np.sin(self.theta + np.pi/4)
+                force[1] = np.clip(force[1], None, 0)  # Upper bound to 0 -> no pulling on the ground
                 force[2] = self.F[2] * np.sin(self.theta)
                 force[2] = np.clip(force[2], None, 0)  # Upper bound to 0 -> no pulling on the ground
-                
         return force
 
     def impulse_duration(self) -> float: #impulse = phase where force is applied

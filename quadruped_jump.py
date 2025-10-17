@@ -25,7 +25,7 @@ def quadruped_jump():
     # Compute number of simulation steps
     n_steps = int(n_jumps * jump_duration / sim_options.timestep)
     # TODO: set parameters for the foot force profile here
-    force_profile = FootForceProfile(f0=0.9, f1=7, Fx=50, Fy=0, Fz=200, mode='lateral')
+    force_profile = FootForceProfile('lateral')
         ### Comment choisir ?
 
 
