@@ -25,7 +25,9 @@ def quadruped_jump():
     # Compute number of simulation steps
     n_steps = int(n_jumps * jump_duration / sim_options.timestep)
     # TODO: set parameters for the foot force profile here
-    force_profile = FootForceProfile('lateral')
+    
+
+    force_profile = FootForceProfile('lateral') # none, forward, lateral, spin
         ### Comment choisir ?
 
 
@@ -52,9 +54,11 @@ def quadruped_jump():
         tau += gravity_compensation(simulator)
 
         # If touching the ground, add virtual model
-        on_ground = True  # TODO: how do we know we're on the ground?
-        if on_ground:
+        foot_contact = 0
+        foot_contact = simulator.get_foot_contacts().sum()
+        if foot_contact >= 2:
             tau += virtual_model(simulator)
+
 
         # Set the motor commands and step the simulation
         simulator.set_motor_targets(tau)
@@ -68,8 +72,8 @@ def quadruped_jump():
 
 def nominal_position(
     simulator: QuadSimulator, 
-    Kpjoin=np.diag([200,200,200]), 
-    Kdjoin=np.diag([25,25,25]), 
+    Kpjoin=np.diag([400,400,400]), 
+    Kdjoin=np.diag([35,35,35]), 
     des_pos=np.array([0,0,-0.25]),
     des_vel=np.array([0,0,0])
     # OPTIONAL: add potential controller parameters here (e.g., gains)
@@ -86,11 +90,13 @@ def nominal_position(
         foot_vel = J @ simulator.get_motor_velocities(leg_id)
 
         # hip offset
-        hip_offset = 0.5
+        hip_offset = 0.1
         
-        #if leg_id == 0 or leg_id == 2 :  # right legs
-        #    des_pos[1] = des_pos[1] - hip_offset
-        #else:  # left legs
+        if leg_id == 0 or leg_id == 2 :  # right legs
+            des_pos[1] = - hip_offset
+        elif leg_id == 1 or leg_id == 3 :  # left legs
+            des_pos[1] = hip_offset
+            
         #    des_pos[1] = des_pos[1] + hip_offset
 
         tau_i = J_T @ (Kpjoin @ (des_pos - foot_pos) + Kdjoin @ (des_vel - foot_vel))
@@ -120,7 +126,7 @@ def virtual_model(
         P = simulator.get_base_orientation_matrix() @ first_matrix
         
         # Gain que l'on peut changer 
-        K_vmc = 10
+        K_vmc = 8
 
         matrix_K = K_vmc*([0, 0, 1] @ P)
         zeros_part = np.zeros((2, 4))
@@ -178,7 +184,25 @@ def apply_force_profile(
         J, _ = simulator.get_jacobian_and_position(leg_id)
         J_T = J.transpose()
 
-        tau_i = J_T @ force_profile.force()
+        #IF SPIN -> CHOOSE ROTATION PROFIL
+        rotation_profil = 'none' #none, clockwise, anticlockwise
+
+        Ftwist = force_profile.force()
+        if rotation_profil == 'clockwise':
+            if leg_id == 0 or leg_id == 1:
+                Ftwist[1] = Ftwist[1]
+            else :
+                Ftwist[1] = -Ftwist[1]
+        elif rotation_profil == 'anticlockwise':
+            if leg_id == 0 or leg_id == 1:
+                Ftwist[1] = -Ftwist[1]
+            else :
+                Ftwist[1] = Ftwist[1]
+
+        tau_i = J_T @Ftwist
+
+        #else:
+        #    tau_i = J_T @ +force_profile.force()
         # Store in torques array
         tau[leg_id * N_JOINTS : leg_id * N_JOINTS + N_JOINTS] = tau_i
 

@@ -21,22 +21,28 @@ class FootForceProfile:
         self.mode = mode
         #TUNING PARAMETERS
         match mode:
+            case 'none': 
+                f0=0 
+                f1=0
+                Fx=0
+                Fy=0
+                Fz=0
             case 'forward':
-                f0=1.25 
+                f0=1.3 
                 f1=20
                 Fx=60
                 Fy=0
-                Fz=140
+                Fz=150
             case 'lateral':
-                f0=1
-                f1=7
+                f0=1.2
+                f1=20
                 Fx=0
                 Fy=30
-                Fz=100
+                Fz=150
             case 'spin':
                 f0=1.25
                 f1=20
-                Fx=40
+                Fx=0
                 Fy=40
                 Fz=140
         ###
@@ -61,6 +67,8 @@ class FootForceProfile:
             self.theta += 2 * np.pi * self.f0 * dt #dtheta/dt = theta' = 2pi*f0
         
         return 0
+    
+
 
 
 
@@ -81,8 +89,12 @@ class FootForceProfile:
         # TODO: return the force vector given the oscillator state
         force = np.zeros(3)
         match self.mode:
+            case 'none':
+                force[0] = 0
+                force[1] = 0
+                force[2] = 0
             case 'forward':
-                force[0] = self.F[0] * np.sin(self.theta+ np.pi/4)  #OSCILLATEUR SIMPLE EN X
+                force[0] = self.F[0] * np.sin(self.theta + np.pi/4)  #OSCILLATEUR SIMPLE EN X
                 force[0] = np.clip(force[0], None, 0)  # Upper bound to 0 -> no pulling on the ground
                 #OSCILLATEUR SIMPLE EN Y -> Pas forcement utile bizarre d'avoir un profil en Y 
                 #force[0] = self.F[1] * np.sin(self.theta)
@@ -96,15 +108,15 @@ class FootForceProfile:
                 force[1] = self.F[1] * np.sin(self.theta + np.pi/6)
                 #force[1] = np.clip(force[1], None, 0)  # Upper bound to 0 -> no pulling on the ground
                 #OSCILLATEUR SIMPLE EN Z
-                force[2] = self.F[2] * np.sin(self.theta)
+                force[2] = self.F[2] * np.sin(self.theta - np.pi/6)
                 force[2] = np.clip(force[2], None, 0)  # Upper bound to 0 -> no pulling on the ground
            
             case 'spin':
-                force[0] = self.F[0] * np.sin(self.theta + np.pi/4)
-                force[0] = np.clip(force[0], None, 0)  # Upper bound to 0 -> no pulling on the ground
+                force[0] = 0
+
                 force[1] = self.F[1] * np.sin(self.theta + np.pi/4)
                 force[1] = np.clip(force[1], None, 0)  # Upper bound to 0 -> no pulling on the ground
-                force[2] = self.F[2] * np.sin(self.theta)
+                force[2] = self.F[2] * np.sin(self.theta )
                 force[2] = np.clip(force[2], None, 0)  # Upper bound to 0 -> no pulling on the ground
         return force
 
