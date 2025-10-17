@@ -4,7 +4,7 @@ import numpy as np
 class FootForceProfile:
     """Class to generate foot force profiles over time using a single CPG oscillator"""
 
-    def __init__(self, f0: float, f1: float, Fx: float, Fy: float, Fz: float):
+    def __init__(self, f0: float, f1: float, Fx: float, Fy: float, Fz: float, mode : str):
         """
         Create instance of foot force profile with its arguments.
 
@@ -19,6 +19,7 @@ class FootForceProfile:
         self.f0 = f0
         self.f1 = f1
         self.F = np.array([Fx, Fy, Fz])
+        self.mode = mode
 
     def step(self, dt: float):
         """
@@ -54,16 +55,40 @@ class FootForceProfile:
             np.ndarray: An R^3 array [Fx, Fy, Fz]
         """
         # TODO: return the force vector given the oscillator state
-        force = np.zeros(3)
-        force[0] = self.F[0] * np.sin(self.theta)
-        force[0] = np.clip(force[0], None, 0)  # Upper bound to 0 -> no pulling on the ground
-        #OSCILLATEUR SIMPLE EN Y -> Pas forcement utile bizarre d'avoir un profil en Y 
-        #force[0] = self.F[1] * np.sin(self.theta)
-        force[1] = 0
-        #OSCILLATEUR SIMPLE EN Z
-        force[2] = self.F[2] * np.sin(self.theta)
-        force[2] = np.clip(force[2], None, 0)  # Upper bound to 0 -> no pulling on the ground
-
+       
+        match self.mode :
+            case 'forward' :
+                force = np.zeros(3)
+                force[0] = self.F[0] * np.sin(self.theta + np.pi/4)
+                force[0] = np.clip(force[0], None, 0)  # Upper bound to 0 -> no pulling on the ground
+                #OSCILLATEUR SIMPLE EN Y -> Pas forcement utile bizarre d'avoir un profil en Y 
+                #force[0] = self.F[1] * np.sin(self.theta)
+                force[1] = 0
+                #OSCILLATEUR SIMPLE EN Z
+                force[2] = self.F[2] * np.sin(self.theta)
+                force[2] = np.clip(force[2], None, 0)  # Upper bound to 0 -> no pulling on the ground
+            case 'lateral' :
+                force = np.zeros(3)
+                force[0] = 0
+                #force[0] = self.F[1] * np.sin(self.theta)
+                force[1] = 0
+                force[1] = self.F[0] * np.sin(self.theta)
+                force[1] = np.clip(force[1], None, 0)
+                #OSCILLATEUR SIMPLE EN Z
+                force[2] = self.F[2] * np.sin(self.theta)
+                force[2] = np.clip(force[2], None, 0)  # Upper bound to 0 -> no pulling on the ground
+            
+            case 'spin' :
+                force = np.zeros(3)
+                force[0] = self.F[0] * np.sin(self.theta + np.pi/4)
+                force[0] = np.clip(force[0], None, 0)  # Upper bound to 0 -> no pulling on the ground
+                #OSCILLATEUR SIMPLE EN Y -> Pas forcement utile bizarre d'avoir un profil en Y 
+                #force[0] = self.F[1] * np.sin(self.theta)
+                force[1] = 0
+                #OSCILLATEUR SIMPLE EN Z
+                force[2] = self.F[2] * np.sin(self.theta)
+                force[2] = np.clip(force[2], None, 0)  # Upper bound to 0 -> no pulling on the ground
+                
         return force
 
     def impulse_duration(self) -> float: #impulse = phase where force is applied
