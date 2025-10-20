@@ -72,8 +72,8 @@ def quadruped_jump():
 
 def nominal_position(
     simulator: QuadSimulator, 
-    Kpjoin=np.diag([800,900,1000]), 
-    Kdjoin=np.diag([35,35,40]), 
+    KpCartesian=np.diag([800,900,1000]), 
+    KdCartesian=np.diag([35,35,40]), 
     des_pos=np.array([0,0,-0.25]),
     des_vel=np.array([0,0,0])
     # OPTIONAL: add potential controller parameters here (e.g., gains)
