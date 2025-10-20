@@ -14,7 +14,7 @@ def quadruped_jump():
         on_rack=False,  # Whether to suspend the robot in the air (helpful for debugging)
         render=True,  # Whether to use the GUI visualizer (slower than running in the background)
         record_video=False,  # Whether to record a video to file (needs render=True)
-        tracking_camera=False,  # Whether the camera follows the robot (instead of free)
+        tracking_camera=True,  # Whether the camera follows the robot (instead of free)
     )
     simulator = QuadSimulator(sim_options)
 
@@ -72,8 +72,8 @@ def quadruped_jump():
 
 def nominal_position(
     simulator: QuadSimulator, 
-    Kpjoin=np.diag([400,400,400]), 
-    Kdjoin=np.diag([35,35,35]), 
+    Kpjoin=np.diag([800,900,1000]), 
+    Kdjoin=np.diag([35,35,40]), 
     des_pos=np.array([0,0,-0.25]),
     des_vel=np.array([0,0,0])
     # OPTIONAL: add potential controller parameters here (e.g., gains)
@@ -126,7 +126,7 @@ def virtual_model(
         P = simulator.get_base_orientation_matrix() @ first_matrix
         
         # Gain que l'on peut changer 
-        K_vmc = 8
+        K_vmc = 2
 
         matrix_K = K_vmc*([0, 0, 1] @ P)
         zeros_part = np.zeros((2, 4))
@@ -184,6 +184,20 @@ def apply_force_profile(
         J, _ = simulator.get_jacobian_and_position(leg_id)
         J_T = J.transpose()
 
+        # décalage de phase entre les pattes avant et arrière
+        phase_offset = -np.pi/5.7  # mettre 0 si forward
+
+        if leg_id == 0:  # front legs
+            force_profile.theta += phase_offset
+        elif leg_id == 2:  # back legs
+            force_profile.theta -= phase_offset
+
+        phase_offset_sides = 0
+        if leg_id == 1 or leg_id == 3:  # left legs
+            force_profile.theta += phase_offset_sides
+        elif leg_id == 0 or leg_id == 2:  # right legs
+            force_profile.theta -= phase_offset_sides
+
         #IF SPIN -> CHOOSE ROTATION PROFIL
         rotation_profil = 'none' #none, clockwise, anticlockwise
 
@@ -198,6 +212,8 @@ def apply_force_profile(
                 Ftwist[1] = -Ftwist[1]
             else :
                 Ftwist[1] = Ftwist[1]
+
+        #print ("Force applied on leg ", leg_id, " : ", Ftwist)
 
         tau_i = J_T @Ftwist
 
