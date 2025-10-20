@@ -14,7 +14,7 @@ def quadruped_jump():
         on_rack=False,  # Whether to suspend the robot in the air (helpful for debugging)
         render=True,  # Whether to use the GUI visualizer (slower than running in the background)
         record_video=False,  # Whether to record a video to file (needs render=True)
-        tracking_camera=False,  # Whether the camera follows the robot (instead of free)
+        tracking_camera=True,  # Whether the camera follows the robot (instead of free)
     )
     simulator = QuadSimulator(sim_options)
 
@@ -27,7 +27,7 @@ def quadruped_jump():
     # TODO: set parameters for the foot force profile here
     
 
-    force_profile = FootForceProfile('lateral') # none, forward, lateral, spin
+    force_profile = FootForceProfile('forward') # none, forward, lateral, spin
         ### Comment choisir ?
 
 
@@ -72,8 +72,8 @@ def quadruped_jump():
 
 def nominal_position(
     simulator: QuadSimulator, 
-    Kpjoin=np.diag([400,400,400]), 
-    Kdjoin=np.diag([35,35,35]), 
+    KpCartesian=np.diag([800,900,1000]), #400, 400, 400
+    KdCartesian=np.diag([35,35,40]), 
     des_pos=np.array([0,0,-0.25]),
     des_vel=np.array([0,0,0])
     # OPTIONAL: add potential controller parameters here (e.g., gains)
@@ -93,13 +93,13 @@ def nominal_position(
         hip_offset = 0.1
         
         if leg_id == 0 or leg_id == 2 :  # right legs
-            des_pos[1] = - hip_offset
+            des_pos[1] = -hip_offset
         elif leg_id == 1 or leg_id == 3 :  # left legs
             des_pos[1] = hip_offset
             
         #    des_pos[1] = des_pos[1] + hip_offset
 
-        tau_i = J_T @ (Kpjoin @ (des_pos - foot_pos) + Kdjoin @ (des_vel - foot_vel))
+        tau_i = J_T @ (KpCartesian @ (des_pos - foot_pos) + KdCartesian @ (des_vel - foot_vel))
 
         # Store in torques array
         tau[leg_id * N_JOINTS : leg_id * N_JOINTS + N_JOINTS] = tau_i
@@ -126,7 +126,7 @@ def virtual_model(
         P = simulator.get_base_orientation_matrix() @ first_matrix
         
         # Gain que l'on peut changer 
-        K_vmc = 8
+        K_vmc = 2
 
         matrix_K = K_vmc*([0, 0, 1] @ P)
         zeros_part = np.zeros((2, 4))

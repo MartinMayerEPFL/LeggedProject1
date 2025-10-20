@@ -28,19 +28,19 @@ class FootForceProfile:
                 Fy=0
                 Fz=0
             case 'forward':
-                f0=1.3 
-                f1=20
-                Fx=60
-                Fy=0
-                Fz=150
+                f0=1.970627860738329 
+                f1=14.665702905892067
+                Fx=43.39604550580332
+                Fy=0.043155308422445166
+                Fz=138.35071292181317
             case 'lateral':
                 f0=1.2
-                f1=20
+                f1=10
                 Fx=0
-                Fy=30
-                Fz=150
+                Fy=20
+                Fz=160
             case 'spin':
-                f0=1.25
+                f0=0.5
                 f1=20
                 Fx=0
                 Fy=40
@@ -105,10 +105,10 @@ class FootForceProfile:
             case 'lateral':
                 force[0] = 0
                 #OSCILLATEUR SIMPLE EN Y
-                force[1] = self.F[1] * np.sin(self.theta + np.pi/6)
+                force[1] = self.F[1] * np.sin(self.theta - np.pi/2)
                 #force[1] = np.clip(force[1], None, 0)  # Upper bound to 0 -> no pulling on the ground
                 #OSCILLATEUR SIMPLE EN Z
-                force[2] = self.F[2] * np.sin(self.theta - np.pi/6)
+                force[2] = self.F[2] * np.sin(self.theta)
                 force[2] = np.clip(force[2], None, 0)  # Upper bound to 0 -> no pulling on the ground
            
             case 'spin':
