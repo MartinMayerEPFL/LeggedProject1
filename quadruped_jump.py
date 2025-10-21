@@ -13,23 +13,23 @@ def quadruped_jump():
     sim_options = SimulationOptions(
         on_rack=False,  # Whether to suspend the robot in the air (helpful for debugging)
         render=True,  # Whether to use the GUI visualizer (slower than running in the background)
-        record_video=False,  # Whether to record a video to file (needs render=True)
+        record_video=True,  # Whether to record a video to file (needs render=True)
         tracking_camera=True,  # Whether the camera follows the robot (instead of free)
     )
     simulator = QuadSimulator(sim_options)
 
     # Determine number of jumps to simulate
     n_jumps = 10  # Feel free to change this number
-    jump_duration = 5.0  # TODO: determine how long a jump takes
+    jump_duration = 2.0  # TODO: determine how long a jump takes
         ###Comment  determiner la durée d'un saut ?
     # Compute number of simulation steps
     n_steps = int(n_jumps * jump_duration / sim_options.timestep)
     # TODO: set parameters for the foot force profile here
     
 
-    force_profile = FootForceProfile('forward') # none, forward, lateral, spin
+    force_profile = FootForceProfile('lateral') # none, forward, lateral, spin
         ### Comment choisir ?
-
+    
 
     for _ in range(n_steps):
         # If the simulator is closed, stop the loop
@@ -74,7 +74,7 @@ def nominal_position(
     simulator: QuadSimulator, 
     Kpjoin=np.diag([800,900,1000]), 
     Kdjoin=np.diag([35,35,40]), 
-    des_pos=np.array([0,0,-0.25]),
+    des_pos=np.array([0,0,-0.12]),
     des_vel=np.array([0,0,0])
     # OPTIONAL: add potential controller parameters here (e.g., gains)
 ) -> np.ndarray:
@@ -93,13 +93,13 @@ def nominal_position(
         hip_offset = 0.1
         
         if leg_id == 0 or leg_id == 2 :  # right legs
-            des_pos[1] = -hip_offset
+            des_pos[1] = - hip_offset
         elif leg_id == 1 or leg_id == 3 :  # left legs
             des_pos[1] = hip_offset
             
         #    des_pos[1] = des_pos[1] + hip_offset
 
-        tau_i = J_T @ (KpCartesian @ (des_pos - foot_pos) + KdCartesian @ (des_vel - foot_vel))
+        tau_i = J_T @ (Kpjoin @ (des_pos - foot_pos) + Kdjoin @ (des_vel - foot_vel))
 
         # Store in torques array
         tau[leg_id * N_JOINTS : leg_id * N_JOINTS + N_JOINTS] = tau_i
@@ -185,18 +185,17 @@ def apply_force_profile(
         J_T = J.transpose()
 
         # décalage de phase entre les pattes avant et arrière
-        phase_offset = -np.pi/5.7  # mettre 0 si forward
+        #-np.pi/5.7  # mettre 0 si forward
 
         if leg_id == 0:  # front legs
-            force_profile.theta += phase_offset
+            force_profile.theta += force_profile.phase_offset
         elif leg_id == 2:  # back legs
-            force_profile.theta -= phase_offset
+            force_profile.theta -= force_profile.phase_offset
 
-        phase_offset_sides = 0
         if leg_id == 1 or leg_id == 3:  # left legs
-            force_profile.theta += phase_offset_sides
+            force_profile.theta += force_profile.phase_offset_sides
         elif leg_id == 0 or leg_id == 2:  # right legs
-            force_profile.theta -= phase_offset_sides
+            force_profile.theta -= force_profile.phase_offset_sides
 
         #IF SPIN -> CHOOSE ROTATION PROFIL
         rotation_profil = 'none' #none, clockwise, anticlockwise

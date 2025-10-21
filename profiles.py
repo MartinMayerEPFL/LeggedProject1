@@ -27,28 +27,48 @@ class FootForceProfile:
                 Fx=0
                 Fy=0
                 Fz=0
-            case 'forward':
-                f0=2 
-                f1=25
-                Fx=45
+                phase_offset = 0.0
+                phase_offset_side = 0.0
+            case 'forward': #hight = 0.2 et hips offset = 0.1
+                f0=1.56
+                f1= 1.64
+                Fx= 99.98
                 Fy=0
-                Fz=140
-            case 'lateral':
-                f0=1.3
-                f1= 20
-                Fx=-30
-                Fy= 40
-                Fz=160
+                Fz=199.10
+                phase_offset = 0.0
+                phase_offset_side = 0.0
+            case 'lateral': # hight = 0.12 et offset = 0.1
+
+                # f0= 1.8
+                # f1= 0.5
+                # Fx= 0
+                # Fy= 25
+                # Fz= 140
+                # phase_offset = 0.0
+                # phase_offset_side = 0.0
+                f0 = 1.998769675762356
+                f1 = 1.6302008758205455
+                Fx = 0.0
+                Fy = 33.74649728195565
+                Fz = 124.15867636347573
+                phase_offset = 0.0
+                phase_offset_side = 0.0
+
+
             case 'spin':
                 f0=0.5
                 f1=20
                 Fx=0
                 Fy=40
                 Fz=140
+                phase_offset = 0.0
+                phase_offset_side = 0.0
         ###
         self.f0 = f0
         self.f1 = f1
         self.F = np.array([Fx, Fy, Fz])
+        self.phase_offset = phase_offset
+        self.phase_offset_sides = phase_offset_side
         self.mode = mode
 
     def step(self, dt: float):
@@ -60,7 +80,7 @@ class FootForceProfile:
         """
         # TODO: integrate the oscillator equation
         #Calculer le temps d'un step (dt):
-
+        self.phase()  # mettre a jour theta avant de l'utiliser
         if 0 <= self.theta < np.pi: #impulse phase
             self.theta += 2 * np.pi * self.f1 * dt # dtheta/dt = theta' = 2pi*f1 
         else:
@@ -107,7 +127,7 @@ class FootForceProfile:
                 force[0] = np.clip(force[0], None, 0)  # Upper bound to 0 -> no pulling on the ground
                 #OSCILLATEUR SIMPLE EN Y
                 force[1] = self.F[1] * np.sin(self.theta + np.pi/3)
-                force[1] = np.clip(force[1], 0, None)  # Upper bound to 0 -> no pulling on the ground
+                force[1] = np.clip(force[1], None, 0)  # Upper bound to 0 -> no pulling on the ground
                 #OSCILLATEUR SIMPLE EN Z
                 force[2] = self.F[2] * np.sin(self.theta )
                 force[2] = np.clip(force[2], None, 0)  # Upper bound to 0 -> no pulling on the ground
