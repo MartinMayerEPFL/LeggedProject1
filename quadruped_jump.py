@@ -1,7 +1,8 @@
 import numpy as np
 from env.simulation import QuadSimulator, SimulationOptions
-
+import matplotlib.pyplot as plt
 from profiles import FootForceProfile
+import time
 
 N_LEGS = 4
 N_JOINTS = 3
@@ -19,7 +20,7 @@ def quadruped_jump():
     simulator = QuadSimulator(sim_options)
 
     # Determine number of jumps to simulate
-    n_jumps = 10  # Feel free to change this number
+    n_jumps = 7  # Feel free to change this number
     jump_duration = 2.0  # TODO: determine how long a jump takes
         ###Comment  determiner la durée d'un saut ?
     # Compute number of simulation steps
@@ -27,18 +28,54 @@ def quadruped_jump():
     # TODO: set parameters for the foot force profile here
     
 
-    force_profile = FootForceProfile('lateral') # none, forward, lateral, spin
+    force_profile = FootForceProfile('forward') # none, forward, lateral, spin
         ### Comment choisir ?
-    
+    pied0_array = []
+    pied1_array = []
+    pied2_array = []
+    pied3_array = []
+    array_vx = []
+    array_vx_mean = []
+    array_vy = []
+    array_vz = []
+    array_posx = []
+    array_posy = []
+    array_posz = []
+    profil_force_x =[]
+    profil_force_y = []
+    profil_force_z = []
+    array_theta = []
+    hip_speed_avant = []
+    hip_speed_arriere = []
 
     for _ in range(n_steps):
+        
         # If the simulator is closed, stop the loop
         if not simulator.is_connected():
             break
-
+        
+        array_vx.append(simulator.get_base_linear_velocity()[0])
+        vx_mean = np.mean(array_vx)
+        array_vx_mean.append(vx_mean)
+        array_vy.append(simulator.get_base_linear_velocity()[1])
+        array_vz.append(simulator.get_base_linear_velocity()[2])
+        array_posx.append(simulator.get_base_position()[0])
+        array_posy.append(simulator.get_base_position()[1])
+        array_posz.append(simulator.get_base_position()[2])
+        profil_force_x.append(force_profile.force()[0])
+        profil_force_y.append(force_profile.force()[1])
+        profil_force_z.append(force_profile.force()[2])       
+        pied0_array.append(simulator.get_foot_contacts()[0])
+        pied1_array.append(simulator.get_foot_contacts()[1])
+        pied2_array.append(simulator.get_foot_contacts()[2])
+        pied3_array.append(simulator.get_foot_contacts()[3])
+        array_theta.append(force_profile.theta)
+        hip_speed_avant.append(simulator.get_motor_velocities(0)[0])
+        hip_speed_arriere.append(simulator.get_motor_velocities(2)[0])
+         ### Comment choisir ?
         # Step the oscillator
         force_profile.step(sim_options.timestep)
-
+    
         # Compute torques as motor targets
         # The convention is as follows:
         # - A 1D array where the torques for the 3 motors follow each other for each leg
@@ -68,13 +105,63 @@ def quadruped_jump():
     simulator.close()
 
     # OPTIONAL: add additional functions here (e.g., plotting)
+
+    fig, axs = plt.subplots(nrows=4, ncols=1, figsize=(10, 8))
+    axs[0,].plot(pied0_array, label='Pied 0', color='red')
+    axs[0,].set_title('Foot 0 Contact')
+    axs[1,].plot(pied1_array, label='Pied 1', color='green')
+    axs[1,].set_title('Foot 1 Contact')
+    axs[2,].plot(pied2_array, label='Pied 2', color='blue')
+    axs[2,].set_title('Foot 2 Contact')
+    axs[3,].plot(pied3_array, label='Pied 3', color='orange')
+    axs[3,].set_title('Foot 3 Contact')
+    fig.tight_layout()
+    plt.show()
+
+    plt.plot(array_posx, label='x')
+    plt.plot(array_posy, label='y')
+    plt.plot(array_posz, label='z')
+    plt.xlabel("Time step")
+    plt.ylabel("Base position (m)")
+    plt.title("Position")
+    plt.grid()
+    plt.legend()
+    plt.show()
+
+    plt.plot(array_vx, label='Vx')
+    plt.plot(array_vx_mean, label='Vx_mean')
+    # plt.plot(array_vy, label='Vy')
+    # plt.plot(array_vz, label='Vz')
+    plt.xlabel("Time step")
+    plt.ylabel("Instant velocity (m/s)")
+    plt.title("Velocity")
+    plt.grid()
+    plt.legend()
+    plt.show()
+
+    plt.plot(hip_speed_avant, label='Hip Speed Front')
+    plt.plot(hip_speed_arriere, label='Hip Speed rear')
+    plt.xlabel("Time step")
+    plt.ylabel("Motor Speed (rad/s)")
+    plt.title("Motor Speeds, fr/rr")
+    plt.grid()
+    plt.legend()
+    plt.show()
+
+    plt.plot(array_theta, label='Theta')
+    plt.xlabel("Time step")
+    plt.ylabel("Theta (rad)")
+    plt.title("Theta")
+    plt.grid()
+    plt.legend()
+    plt.show()
     
 
 def nominal_position(
     simulator: QuadSimulator, 
-    Kpjoin=np.diag([800,900,1000]), 
-    Kdjoin=np.diag([35,35,40]), 
-    des_pos=np.array([0,0,-0.12]),
+    KpCartesian=np.diag([800,900,1000]), 
+    KdCartesian=np.diag([35,35,40]), 
+    des_pos=np.array([0,0,-0.20]),
     des_vel=np.array([0,0,0])
     # OPTIONAL: add potential controller parameters here (e.g., gains)
 ) -> np.ndarray:
@@ -99,7 +186,7 @@ def nominal_position(
             
         #    des_pos[1] = des_pos[1] + hip_offset
 
-        tau_i = J_T @ (Kpjoin @ (des_pos - foot_pos) + Kdjoin @ (des_vel - foot_vel))
+        tau_i = J_T @ (KpCartesian @ (des_pos - foot_pos) + KdCartesian @ (des_vel - foot_vel))
 
         # Store in torques array
         tau[leg_id * N_JOINTS : leg_id * N_JOINTS + N_JOINTS] = tau_i
@@ -185,17 +272,15 @@ def apply_force_profile(
         J_T = J.transpose()
 
         # décalage de phase entre les pattes avant et arrière
-        #-np.pi/5.7  # mettre 0 si forward
+        # if leg_id == 0:  # front legs
+        #     force_profile.theta += force_profile.phase_offset
+        # elif leg_id == 2:  # back legs
+        #     force_profile.theta -= force_profile.phase_offset
 
-        if leg_id == 0:  # front legs
-            force_profile.theta += force_profile.phase_offset
-        elif leg_id == 2:  # back legs
-            force_profile.theta -= force_profile.phase_offset
-
-        if leg_id == 1 or leg_id == 3:  # left legs
-            force_profile.theta += force_profile.phase_offset_sides
-        elif leg_id == 0 or leg_id == 2:  # right legs
-            force_profile.theta -= force_profile.phase_offset_sides
+        # if leg_id == 1 or leg_id == 3:  # left legs
+        #     force_profile.theta += force_profile.phase_offset_sides
+        # elif leg_id == 0 or leg_id == 2:  # right legs
+        #     force_profile.theta -= force_profile.phase_offset_sides
 
         #IF SPIN -> CHOOSE ROTATION PROFIL
         rotation_profil = 'none' #none, clockwise, anticlockwise

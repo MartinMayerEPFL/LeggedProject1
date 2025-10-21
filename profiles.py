@@ -29,41 +29,61 @@ class FootForceProfile:
                 Fz=0
                 phase_offset = 0.0
                 phase_offset_side = 0.0
-            case 'forward': #hight = 0.2 et hips offset = 0.1
-                f0=1.56
-                f1= 1.64
-                Fx= 99.98
-                Fy=0
-                Fz=199.10
+
+            case 'forward': # CHANGE in quadruped_jump.py, nominal_position :des_pos = [0,0,-0.2] et hip_offset = 0.1
+                ### Params without optimization
+                f0= 1.5
+                f1 = 1
+                Fx = 60
+                Fy = 0
+                Fz = 150
+
                 phase_offset = 0.0
                 phase_offset_side = 0.0
-            case 'lateral': # hight = 0.12 et offset = 0.1
+                
+                # ### Params with optimization
+                # f0=1.56
+                # f1= 1.64
+                # Fx= 99.98
+                # Fy=0
+                # Fz=199.10
 
-                # f0= 1.8
-                # f1= 0.5
-                # Fx= 0
-                # Fy= 25
-                # Fz= 140
                 # phase_offset = 0.0
                 # phase_offset_side = 0.0
-                f0 = 1.998769675762356
-                f1 = 1.6302008758205455
-                Fx = 0.0
-                Fy = 33.74649728195565
-                Fz = 124.15867636347573
+
+            case 'lateral': # CHANGE in quadruped_jump.py, nominal_position :des_pos = [0,0,-0.15] et hip_offset = 0.1
+
+                # ### Params without optimization
+                # f0= 3
+                # f1= 0.3 # changer les bornes
+                # Fx= -10
+                # Fy= 40
+                # Fz= 150
+
+                # phase_offset = 0.0
+                # phase_offset_side = 0.0
+
+                ### Params with optimization
+                f0=2.913407985542411
+                f1=0.5043077082354251
+                Fx=2.700764507784139
+                Fy=82.5129054728558
+                Fz=125.8335580297119
+
                 phase_offset = 0.0
                 phase_offset_side = 0.0
 
-
-            case 'spin':
-                f0=0.5
-                f1=20
+            case 'spin': # CHANGE in quadruped_jump.py, nominal_position :des_pos = [0,0,-0.2] et hip_offset = 0.1
+                         # + in apply_force_profile change rotation_profil = 'clockwise' or 'anticlockwise'
+                f0=1.51
+                f1=3.01
                 Fx=0
-                Fy=40
-                Fz=140
+                Fy=87
+                Fz=124.30
+
                 phase_offset = 0.0
                 phase_offset_side = 0.0
-        ###
+        
         self.f0 = f0
         self.f1 = f1
         self.F = np.array([Fx, Fy, Fz])
@@ -113,32 +133,38 @@ class FootForceProfile:
                 force[0] = 0
                 force[1] = 0
                 force[2] = 0
+
             case 'forward':
-                force[0] = self.F[0] * np.sin(self.theta + np.pi/4)  #OSCILLATEUR SIMPLE EN X
+                #OSCILLATEUR SIMPLE EN X
+                force[0] = self.F[0] * np.sin(self.theta + np.pi/4)
                 force[0] = np.clip(force[0], None, 0)  # Upper bound to 0 -> no pulling on the ground
-                #OSCILLATEUR SIMPLE EN Y -> Pas forcement utile bizarre d'avoir un profil en Y 
-                #force[0] = self.F[1] * np.sin(self.theta)
+                #OSCILLATEUR SIMPLE EN Y
                 force[1] = 0
                 #OSCILLATEUR SIMPLE EN Z
                 force[2] = self.F[2] * np.sin(self.theta)
-                force[2] = np.clip(force[2], None, 0)  # Upper bound to 0 -> no pulling on the ground
+                force[2] = np.clip(force[2], None, 0)
+
             case 'lateral':
-                force[0] = self.F[0] * np.sin(self.theta + np.pi/3)  #OSCILLATEUR SIMPLE EN X
-                force[0] = np.clip(force[0], None, 0)  # Upper bound to 0 -> no pulling on the ground
+                #OSCILLATEUR SIMPLE EN X
+                force[0] = self.F[0] * np.sin(self.theta)  
+                force[0] = np.clip(force[0], 0, None)
                 #OSCILLATEUR SIMPLE EN Y
-                force[1] = self.F[1] * np.sin(self.theta + np.pi/3)
-                force[1] = np.clip(force[1], None, 0)  # Upper bound to 0 -> no pulling on the ground
+                force[1] = self.F[1] * np.sin(self.theta)
+                force[1] = np.clip(force[1], None, 0) 
                 #OSCILLATEUR SIMPLE EN Z
                 force[2] = self.F[2] * np.sin(self.theta )
-                force[2] = np.clip(force[2], None, 0)  # Upper bound to 0 -> no pulling on the ground
+                force[2] = np.clip(force[2], None, 0) 
            
             case 'spin':
+                #OSCILLATEUR SIMPLE EN X
                 force[0] = 0
-
+                #OSCILLATEUR SIMPLE EN Y
                 force[1] = self.F[1] * np.sin(self.theta + np.pi/4)
-                force[1] = np.clip(force[1], None, 0)  # Upper bound to 0 -> no pulling on the ground
+                force[1] = np.clip(force[1], None, 0)
+                #OSCILLATEUR SIMPLE EN Z
                 force[2] = self.F[2] * np.sin(self.theta )
-                force[2] = np.clip(force[2], None, 0)  # Upper bound to 0 -> no pulling on the ground
+                force[2] = np.clip(force[2], None, 0)
+
         return force
 
     def impulse_duration(self) -> float: #impulse = phase where force is applied

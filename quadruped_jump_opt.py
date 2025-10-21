@@ -3,6 +3,7 @@ import numpy as np
 from functools import partial
 from optuna.trial import Trial
 from env.simulation import QuadSimulator, SimulationOptions
+import matplotlib.pyplot as plt
 
 from profiles import FootForceProfile
 
@@ -25,7 +26,7 @@ def quadruped_jump_optimization():
         on_rack=False,  # Whether to suspend the robot in the air (helpful for debugging)
         render=False,  # Whether to use the GUI visualizer (slower than running in the background)
         record_video=False,  # Whether to record a video to file (needs render=True)
-        tracking_camera=True,  # Whether the camera follows the robot (instead of free)
+        tracking_camera=False,  # Whether the camera follows the robot (instead of free)
     )
     simulator = QuadSimulator(sim_options)
 
@@ -40,7 +41,7 @@ def quadruped_jump_optimization():
 
     # Run the optimization
     # You can change the number of trials here
-    study.optimize(objective, n_trials=20)
+    study.optimize(objective, n_trials=250)
 
     # Close the simulation
     simulator.close()
@@ -62,10 +63,6 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
     # TODO: pick optimization variables
     # The following function creates an optimization variable with given name and lower and upper bounds
     # You can then plug in the value in your controller
-    
-    #KpCartesian = np.diag([800,900,1000])
-    #KdCartesian = np.diag([35,35,40])
-    #K_vmc = 2
 
     # f0=1.9254848285487531
     # f1=4.600677008247974
@@ -93,8 +90,8 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
     sim_options = simulator.options
 
     # Determine number of jumps to simulate
-    n_jumps = 1  # Feel free to change this number
-    jump_duration = 10.0  # TODO: determine how long a jump takes
+    n_jumps = 7  # Feel free to change this number
+    jump_duration = 2  # TODO: determine how long a jump takes
     n_steps = int(n_jumps * jump_duration / sim_options.timestep)
 
     # TODO: set parameters for the foot force profile here
@@ -114,7 +111,6 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
     for _ in range(n_steps):
         # Step the oscillator
         force_profile.step(sim_options.timestep)
-
         # Compute torques as motor targets (reuses your controller functions)
         # OPTIONAL: add potential extra controller parameters here
         tau = np.zeros(N_JOINTS * N_LEGS)
