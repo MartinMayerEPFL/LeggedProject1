@@ -14,7 +14,7 @@ def quadruped_jump():
         on_rack=False,  # Whether to suspend the robot in the air (helpful for debugging)
         render=True,  # Whether to use the GUI visualizer (slower than running in the background)
         record_video=False,  # Whether to record a video to file (needs render=True)
-        tracking_camera=True,  # Whether the camera follows the robot (instead of free)
+        tracking_camera=False,  # Whether the camera follows the robot (instead of free)
     )
     simulator = QuadSimulator(sim_options)
 
@@ -27,7 +27,7 @@ def quadruped_jump():
     # TODO: set parameters for the foot force profile here
     
 
-    force_profile = FootForceProfile('forward') # none, forward, lateral, spin
+    force_profile = FootForceProfile('lateral') # none, forward, lateral, spin
         ### Comment choisir ?
 
 
@@ -74,7 +74,7 @@ def nominal_position(
     simulator: QuadSimulator, 
     KpCartesian=np.diag([800,900,1000]), 
     KdCartesian=np.diag([35,35,40]), 
-    des_pos=np.array([0,0,-0.25]),
+    des_pos=np.array([0,0,-0.15]),
     des_vel=np.array([0,0,0])
     # OPTIONAL: add potential controller parameters here (e.g., gains)
 ) -> np.ndarray:
@@ -185,7 +185,7 @@ def apply_force_profile(
         J_T = J.transpose()
 
         # décalage de phase entre les pattes avant et arrière
-        phase_offset = -np.pi/5.7  # mettre 0 si forward
+        phase_offset =0 # -np.pi/5.7  # mettre 0 si forward
 
         if leg_id == 0:  # front legs
             force_profile.theta += phase_offset

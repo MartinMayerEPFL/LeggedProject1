@@ -23,7 +23,7 @@ def quadruped_jump_optimization():
     # Feel free to change these options! (except for control_mode and timestep)
     sim_options = SimulationOptions(
         on_rack=False,  # Whether to suspend the robot in the air (helpful for debugging)
-        render=True,  # Whether to use the GUI visualizer (slower than running in the background)
+        render=False,  # Whether to use the GUI visualizer (slower than running in the background)
         record_video=False,  # Whether to record a video to file (needs render=True)
         tracking_camera=True,  # Whether the camera follows the robot (instead of free)
     )
@@ -31,7 +31,7 @@ def quadruped_jump_optimization():
 
     # Create a maximization problem
     objective = partial(evaluate_jumping, simulator=simulator)
-    sampler = optuna.samplers.TPESampler(seed=42) #SEED VALUE
+    sampler = optuna.samplers.TPESampler(seed=34) #SEED VALUE
     study = optuna.create_study(
         study_name="Quadruped Jumping Optimization",
         sampler=sampler,
@@ -62,16 +62,13 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
     # TODO: pick optimization variables
     # The following function creates an optimization variable with given name and lower and upper bounds
     # You can then plug in the value in your controller
-    
-    #KpCartesian = np.diag([800,900,1000])
-    #KdCartesian = np.diag([35,35,40])
-    #K_vmc = 2
 
-    f0_opt = trial.suggest_float(name="f0 : ", low=0.0, high=5.0)
-    f1_opt = trial.suggest_float(name="f1 : ", low=0.0, high=20.0)
-    Fx_opt=trial.suggest_float(name="Fx : ", low=20.0, high=100.0)
-    Fy_opt=trial.suggest_float(name="Fy : ", low=0.0, high=10.0)
-    Fz_opt=trial.suggest_float(name="Fz : ", low=80.0, high=150.0)
+
+    f0_opt = trial.suggest_float(name="f0 : ", low=1, high=4.5)
+    f1_opt = trial.suggest_float(name="f1 : ", low=5.0, high=19.0)
+    Fx_opt=trial.suggest_float(name="Fx : ", low=-3.0, high=3.0)
+    Fy_opt=trial.suggest_float(name="Fy : ", low=40.0, high=100.0)
+    Fz_opt=trial.suggest_float(name="Fz : ", low=90.0, high=130.0)
 
     # Reset the simulation
     simulator.reset()
@@ -80,12 +77,12 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
     sim_options = simulator.options
 
     # Determine number of jumps to simulate
-    n_jumps = 1  # Feel free to change this number
-    jump_duration = 5.0  # TODO: determine how long a jump takes
+    n_jumps = 7  # Feel free to change this number
+    jump_duration = 1.5  # TODO: determine how long a jump takes
     n_steps = int(n_jumps * jump_duration / sim_options.timestep)
 
     # TODO: set parameters for the foot force profile here
-    force_profile = FootForceProfile('forward')
+    force_profile = FootForceProfile('lateral')
     force_profile.f0 = f0_opt
     force_profile.f1 = f1_opt
     force_profile.F[0] = Fx_opt
@@ -117,9 +114,11 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
 
     # TODO: implement an objective function and return its value
     # Note: the objective function is maximized!
-    distance_x, _, _ = simulator.get_base_position()
+    distance_x, distance_y, _ = simulator.get_base_position()
+    speed_x, _, _ = simulator.get_base_linear_velocity()
+    _,_,yaw = simulator.get_base_orientation_roll_pitch_yaw()
 
-    return distance_x
+    return 5*distance_y - 17*abs(np.sin(yaw)) - abs(distance_x)
 
 
 if __name__ == "__main__":
