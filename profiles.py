@@ -28,17 +28,18 @@ class FootForceProfile:
                 Fy=0
                 Fz=0
             case 'forward':
-                f0=2.795797897840501 
-                f1=11.990102169957526
-                Fx=43.33231986416264
-                Fy=2.9635934591899193
-                Fz=87.26505589383096
+                f0=2
+                f1=0.2
+                Fx=0
+                Fy=100
+                Fz=100
             case 'lateral':
-                f0=1.4647893048522844
-                f1=11.934246171947349
-                Fx=2.4517451186941397
-                Fy=71.69488523897299
-                Fz=117.91183004114657
+                #f0=3.4627717856260882
+                f0=2.913407985542411
+                f1=0.5043077082354251
+                Fx=2.700764507784139
+                Fy=82.5129054728558
+                Fz=125.8335580297119
             case 'spin':
                 f0=0.5
                 f1=20
@@ -60,8 +61,8 @@ class FootForceProfile:
         """
         # TODO: integrate the oscillator equation
         #Calculer le temps d'un step (dt):
-
-        if 0 <= self.theta < np.pi: #impulse phase
+        self.phase()
+        if 0 <= self.theta < np.pi: #idle phase
             self.theta += 2 * np.pi * self.f1 * dt # dtheta/dt = theta' = 2pi*f1 
         else:
             self.theta += 2 * np.pi * self.f0 * dt #dtheta/dt = theta' = 2pi*f0
@@ -94,7 +95,7 @@ class FootForceProfile:
                 force[1] = 0
                 force[2] = 0
             case 'forward':
-                force[0] = self.F[0] * np.sin(self.theta + np.pi/4)  #OSCILLATEUR SIMPLE EN X
+                force[0] = self.F[0] * np.sin(self.theta) #+ np.pi/4)  #OSCILLATEUR SIMPLE EN X
                 force[0] = np.clip(force[0], None, 0)  # Upper bound to 0 -> no pulling on the ground
                 #OSCILLATEUR SIMPLE EN Y -> Pas forcement utile bizarre d'avoir un profil en Y 
                 #force[0] = self.F[1] * np.sin(self.theta)
@@ -104,10 +105,10 @@ class FootForceProfile:
                 force[2] = np.clip(force[2], None, 0)  # Upper bound to 0 -> no pulling on the ground
             case 'lateral':
                 force[0] = self.F[0] * np.sin(self.theta)  #OSCILLATEUR SIMPLE EN X
-                force[0] = np.clip(force[0], None, 0)  # Upper bound to 0 -> no pulling on the ground
+                force[0] = np.clip(force[0], 0, None)  # Upper bound to 0 -> no pulling on the ground
                 #OSCILLATEUR SIMPLE EN Y
                 force[1] = self.F[1] * np.sin(self.theta)
-                force[1] = np.clip(force[1], 0, None)  # Upper bound to 0 -> no pulling on the ground
+                force[1] = np.clip(force[1], None, 0)  # Upper bound to 0 -> no pulling on the ground
                 #OSCILLATEUR SIMPLE EN Z
                 force[2] = self.F[2] * np.sin(self.theta )
                 force[2] = np.clip(force[2], None, 0)  # Upper bound to 0 -> no pulling on the ground
